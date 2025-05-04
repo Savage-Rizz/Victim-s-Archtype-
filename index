@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Victim Archetype Identifier</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .question {
+            background-color: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .options {
+            margin: 15px 0;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .archetype-detail {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #333;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .archetype-detail h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .match-percentage {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        #progress-container {
+            width: 100%;
+            background-color: #3a3a3a;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        #progress-bar {
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>Victim Archetype Identifier</h1>
+    <p>Answer these 20 questions about your target to reveal their psychological vulnerabilities</p>
+    
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+    
+    <div id="quiz"></div>
+    <button onclick="calculateResult()">Reveal Archetype</button>
+    <div id="result"></div>
+
+    <script>
+        const questions = [
+            {
+                question: "1. How do they react to flattery and sweet talk?",
+                answers: {
+                    A: { text: "Blushes, dismisses it modestly", archetypes: ["New Prude", "Rescuer"] },
+                    B: { text: "Expects it as their due", archetypes: ["Pampered Royal", "Beauty"] },
+                    C: { text: "Tests if you really mean it", archetypes: ["Crushed Star", "Roué"] },
+                    D: { text: "Gets suspicious or uncomfortable", archetypes: ["Professor", "Floating Gender"] }
+                }
+            },
+            {
+                question: "2. What's their relationship history like?",
+                answers: {
+                    A: { text: "Wild past, now 'settled down'", archetypes: ["Reformed Rake", "Roué"] },
+                    B: { text: "Few partners, idealizes romance", archetypes: ["Disappointed Dreamer", "Idol Worshipper"] },
+                    C: { text: "Many short flings, always bored", archetypes: ["Conqueror", "Sensualist"] },
+                    D: { text: "Fixates on one unattainable person", archetypes: ["Drama Queen", "Lonely Leader"] }
+                }
+            },
+            {
+                question: "3. What do they complain about most?",
+                answers: {
+                    A: { text: "'Nobody sees the real me'", archetypes: ["Beauty", "Lonely Leader"] },
+                    B: { text: "'Life feels so predictable'", archetypes: ["Pampered Royal", "Conqueror"] },
+                    C: { text: "'People only want me for [looks/money/status]'", archetypes: ["Crushed Star", "Sensualist"] },
+                    D: { text: "'I'm tired of fixing others' problems'", archetypes: ["Rescuer", "Professor"] }
+                }
+            },
+            {
+                question: "4. At parties, they're usually...",
+                answers: {
+                    A: { text: "Holding court with admirers", archetypes: ["Pampered Royal", "Beauty"] },
+                    B: { text: "Quietly analyzing everyone", archetypes: ["Professor", "Floating Gender"] },
+                    C: { text: "Flirting with someone new", archetypes: ["Reformed Rake", "Sensualist"] },
+                    D: { text: "Playing therapist to friends", archetypes: ["Rescuer", "Disappointed Dreamer"] }
+                }
+            },
+            {
+                question: "5. How do they handle boredom?",
+                answers: {
+                    A: { text: "Creates drama", archetypes: ["Drama Queen", "Pampered Royal"] },
+                    B: { text: "Seeks dangerous thrills", archetypes: ["Conqueror", "Reformed Rake"] },
+                    C: { text: "Dives into fantasy worlds", archetypes: ["Disappointed Dreamer", "Idol Worshipper"] },
+                    D: { text: "Judges others as 'basic'", archetypes: ["Crushed Star", "Roué"] }
+                }
+            },
+            {
+                question: "6. Their social media is full of...",
+                answers: {
+                    A: { text: "Artsy/philosophical posts", archetypes: ["Professor", "Floating Gender"] },
+                    B: { text: "Throwback glory days pics", archetypes: ["Crushed Star", "Roué"] },
+                    C: { text: "Attention-grabbing provocations", archetypes: ["Pampered Royal", "Drama Queen"] },
+                    D: { text: "Rescuing animals/people", archetypes: ["Rescuer", "Disappointed Dreamer"] }
+                }
+            },
+            {
+                question: "7. When hurt, they...",
+                answers: {
+                    A: { text: "Isolate and overthink", archetypes: ["Professor", "New Prude"] },
+                    B: { text: "Seek revenge through seduction", archetypes: ["Reformed Rake", "Conqueror"] },
+                    C: { text: "Become coldly logical", archetypes: ["Floating Gender", "Roué"] },
+                    D: { text: "Dramatically cut people off", archetypes: ["Drama Queen", "Pampered Royal"] }
+                }
+            },
+            {
+                question: "8. What makes them feel powerful?",
+                answers: {
+                    A: { text: "Being needed", archetypes: ["Rescuer", "Idol Worshipper"] },
+                    B: { text: "Breaking rules", archetypes: ["Conqueror", "Reformed Rake"] },
+                    C: { text: "Winning competitions", archetypes: ["Pampered Royal", "Crushed Star"] },
+                    D: { text: "Being unpredictable", archetypes: ["Drama Queen", "Floating Gender"] }
+                }
+            },
+            {
+                question: "9. Their greatest fear is...",
+                answers: {
+                    A: { text: "Being ordinary", archetypes: ["Pampered Royal", "Beauty"] },
+                    B: { text: "Losing control", archetypes: ["Professor", "New Prude"] },
+                    C: { text: "Emotional suffocation", archetypes: ["Reformed Rake", "Conqueror"] },
+                    D: { text: "Facing reality", archetypes: ["Disappointed Dreamer", "Idol Worshipper"] }
+                }
+            },
+            {
+                question: "10. They're most impressed by...",
+                answers: {
+                    A: { text: "Mysterious past lovers", archetypes: ["Roué", "Disappointed Dreamer"] },
+                    B: { text: "Noble charity work", archetypes: ["Rescuer", "Idol Worshipper"] },
+                    C: { text: "Unconventional lifestyles", archetypes: ["Floating Gender", "Conqueror"] },
+                    D: { text: "Intellectual debates", archetypes: ["Professor", "New Prude"] }
+                }
+            },
+            {
+                question: "11. Their dealbreaker is...",
+                answers: {
+                    A: { text: "Bad hygiene", archetypes: ["Beauty", "Sensualist"] },
+                    B: { text: "Neediness", archetypes: ["Pampered Royal", "Conqueror"] },
+                    C: { text: "Predictability", archetypes: ["Reformed Rake", "Drama Queen"] },
+                    D: { text: "Lack of ambition", archetypes: ["Crushed Star", "Lonely Leader"] }
+                }
+            },
+            {
+                question: "12. They often fall for...",
+                answers: {
+                    A: { text: "'Damaged' people", archetypes: ["Rescuer", "Idol Worshipper"] },
+                    B: { text: "Foreigners/rebels", archetypes: ["Disappointed Dreamer", "Conqueror"] },
+                    C: { text: "Hard-to-get types", archetypes: ["Pampered Royal", "Beauty"] },
+                    D: { text: "Younger partners", archetypes: ["Roué", "Crushed Star"] }
+                }
+            },
+            {
+                question: "13. Their guilty pleasure is...",
+                answers: {
+                    A: { text: "Trashy romance novels", archetypes: ["Disappointed Dreamer", "Idol Worshipper"] },
+                    B: { text: "Stalking exes online", archetypes: ["Crushed Star", "Drama Queen"] },
+                    C: { text: "Impulse purchases", archetypes: ["Pampered Royal", "Sensualist"] },
+                    D: { text: "Revenge fantasies", archetypes: ["Reformed Rake", "Conqueror"] }
+                }
+            },
+            {
+                question: "14. They secretly judge others for...",
+                answers: {
+                    A: { text: "Being 'shallow'", archetypes: ["Professor", "New Prude"] },
+                    B: { text: "Lack of adventure", archetypes: ["Conqueror", "Reformed Rake"] },
+                    C: { text: "Emotional neediness", archetypes: ["Pampered Royal", "Floating Gender"] },
+                    D: { text: "Following rules", archetypes: ["Drama Queen", "Roué"] }
+                }
+            },
+            {
+                question: "15. Their browser history would show...",
+                answers: {
+                    A: { text: "Psychology articles", archetypes: ["Professor", "Rescuer"] },
+                    B: { text: "Dark erotic fiction", archetypes: ["Roué", "Sensualist"] },
+                    C: { text: "Travel blogs", archetypes: ["Disappointed Dreamer", "Conqueror"] },
+                    D: { text: "Self-help forums", archetypes: ["Crushed Star", "New Prude"] }
+                }
+            },
+            {
+                question: "16. Their wardrobe is mostly...",
+                answers: {
+                    A: { text: "Elegant classics", archetypes: ["Beauty", "Pampered Royal"] },
+                    B: { text: "Bold statement pieces", archetypes: ["Drama Queen", "Conqueror"] },
+                    C: { text: "Comfy casual wear", archetypes: ["New Prude", "Professor"] },
+                    D: { text: "Androgynous styles", archetypes: ["Floating Gender", "Roué"] }
+                }
+            },
+            {
+                question: "17. They're most defensive about...",
+                answers: {
+                    A: { text: "Their intelligence", archetypes: ["Professor", "Lonely Leader"] },
+                    B: { text: "Their wild youth", archetypes: ["Reformed Rake", "Roué"] },
+                    C: { text: "Their independence", archetypes: ["Floating Gender", "Conqueror"] },
+                    D: { text: "Their kindness", archetypes: ["Rescuer", "Idol Worshipper"] }
+                }
+            },
+            {
+                question: "18. In arguments, they...",
+                answers: {
+                    A: { text: "Weaponize logic", archetypes: ["Professor", "Lonely Leader"] },
+                    B: { text: "Push boundaries", archetypes: ["Conqueror", "Drama Queen"] },
+                    C: { text: "Play the victim", archetypes: ["Crushed Star", "Rescuer"] },
+                    D: { text: "Stonewall", archetypes: ["New Prude", "Floating Gender"] }
+                }
+            },
+            {
+                question: "19. Their friends describe them as...",
+                answers: {
+                    A: { text: "'A hopeless romantic'", archetypes: ["Disappointed Dreamer", "Idol Worshipper"] },
+                    B: { text: "'Exhausting but fun'", archetypes: ["Drama Queen", "Pampered Royal"] },
+                    C: { text: "'Hard to pin down'", archetypes: ["Floating Gender", "Reformed Rake"] },
+                    D: { text: "'Too nice for their own good'", archetypes: ["Rescuer", "New Prude"] }
+                }
+            },
+            {
+                question: "20. Their eyes light up when discussing...",
+                answers: {
+                    A: { text: "Forbidden taboos", archetypes: ["Roué", "Sensualist"] },
+                    B: { text: "Childhood dreams", archetypes: ["Disappointed Dreamer", "Crushed Star"] },
+                    C: { text: "Power dynamics", archetypes: ["Conqueror", "Lonely Leader"] },
+                    D: { text: "Spiritual awakening", archetypes: ["Professor", "Floating Gender"] }
+                }
+            }
+        ];
+
+        const archetypeInfo = {
+            "Reformed Rake": {
+                desc: "They used to live wildly — full of passion, love, and charm. Now they're 'tamed' but miss the thrill. They long for someone to wake that side up again and bring back the fire they once had.",
+                weakness: "Wants to believe they've changed",
+                approach: "Appeal to their 'new self' while secretly reigniting their wild side"
+            },
+            "Disappointed Dreamer": {
+                desc: "They've read too many love stories or seen too many movies. They hope life will feel like that — magical, deep, meaningful. Often let down by real life, they're secretly waiting for someone who feels like a dream come true.",
+                weakness: "Yearns for lost ideals",
+                approach: "Position yourself as the realization of their abandoned dreams"
+            },
+            "Pampered Royal": {
+                desc: "They've had a life full of comfort and attention, but it's never enough. They get bored quickly and want constant entertainment or admiration. They're looking for someone who feels exciting and fresh all the time.",
+                weakness: "Used to constant admiration",
+                approach: "Alternate between lavish praise and subtle withdrawal"
+            },
+            "New Prude": {
+                desc: "On the outside, they're polite, modest, maybe even shy. But inside, they crave excitement and rebellion. They need someone bold enough to help them explore a wilder side they've kept hidden.",
+                weakness: "Repressed desires beneath rigid morals",
+                approach: "Slowly awaken their hidden sensuality"
+            },
+            "Crushed Star": {
+                desc: "They were once admired — maybe popular, attractive, or successful. But now they feel forgotten. They secretly wish to feel special again, to be noticed and adored like they once were.",
+                weakness: "Former glory they crave to regain",
+                approach: "Treat them as the celebrity they once were"
+            },
+            "Novice": {
+                desc: "They haven't explored much in love or life yet. Everything feels new and a little scary. They crave someone experienced who can guide them gently into new emotions and adventures.",
+                weakness: "Naive curiosity about the world",
+                approach: "Position yourself as their exciting guide"
+            },
+            "Conqueror": {
+                desc: "They love the chase and hate anything too easy. They want someone who makes them work — someone who's mysterious or plays hard to get. They get addicted to the game of winning hearts.",
+                weakness: "Needs constant challenges",
+                approach: "Present yourself as the ultimate prize to be won"
+            },
+            "Drama Queen/King": {
+                desc: "They live for drama — not on purpose, but because they feel everything deeply. They love passionate love stories full of highs and lows. They need someone who can ride that emotional roller coaster with them.",
+                weakness: "Craves emotional intensity",
+                approach: "Create rollercoaster romantic scenarios"
+            },
+            "Professor": {
+                desc: "They're smart and love ideas — but not always good with feelings. They live in their head and overthink everything. Deep down, they wish someone could help them feel instead of think.",
+                weakness: "Overthinks emotions",
+                approach: "Seduce their mind first, body second"
+            },
+            "Beauty": {
+                desc: "They've always been praised for how they look. People want them, but not many truly see them. They long for someone who can go beyond the surface and appreciate who they really are inside.",
+                weakness: "Fear of being valued only superficially",
+                approach: "Show appreciation for their inner qualities"
+            },
+            "Rescuer": {
+                desc: "They feel needed when they're helping others. They're drawn to those in pain or chaos because saving someone makes them feel strong and valuable. But sometimes, they forget their own needs.",
+                weakness: "Needs to rescue others",
+                approach: "Pretend to need their redemption"
+            },
+            "Roué": {
+                desc: "They've lived a wild life, had many lovers, and seen too much. Now they're emotionally tired and want something pure. They're drawn to innocence — someone untouched by the darkness they've lived through.",
+                weakness: "Longing for purity after excess",
+                approach: "Project an aura of untouched idealism"
+            },
+            "Idol Worshipper": {
+                desc: "They fall in love with admiration. They don't want an equal — they want someone they can worship. Their love is intense and self-sacrificing, but sometimes they lose their own identity in the process.",
+                weakness: "Needs heroes to adore",
+                approach: "Let them idealize you, then withdraw"
+            },
+            "Sensualist": {
+                desc: "They're addicted to the senses — soft voices, nice smells, good food, beautiful surroundings. They want a partner who can create a sensual world around them. Everything must feel good.",
+                weakness: "Addicted to physical pleasure",
+                approach: "Overwhelm their senses"
+            },
+            "Lonely Leader": {
+                desc: "They're admired and maybe feared — a boss, a leader, or someone with status. But power makes them lonely. They crave someone who sees their human side, not just their position.",
+                weakness: "Isolation at the top",
+                approach: "Offer rare genuine connection"
+            },
+            "Floating Gender": {
+                desc: "They don't fit traditional ideas of 'man' or 'woman.' They might shift between roles or blend both. They want a partner who doesn't judge — who loves them as they are, not as they 'should' be.",
+                weakness: "Feels constrained by labels",
+                approach: "Celebrate their fluidity without categorization"
+            },
+            "Exotic Fetishist": {
+                desc: "They're fascinated by people from different cultures, styles, or backgrounds. The more 'unusual' you are, the more attractive you seem. They want something they haven't seen before.",
+                weakness: "Craves novelty and difference",
+                approach: "Emphasize your uniqueness and mystery"
+            },
+            "Aging Baby": {
+                desc: "They don't want to grow up. They act carefree and silly, maybe even immature, but it's how they protect themselves. They want someone who will let them stay light and fun — not force them to be too serious.",
+                weakness: "Fear of adult responsibilities",
+                approach: "Keep interactions playful and pressure-free"
+            }
+        };
+
+        // Generate quiz HTML
+        let quizHTML = '';
+        questions.forEach((q, index) => {
+            quizHTML += `<div class="question">
+                <p>${q.question}</p>
+                <div class="options">`;
+            
+            for (const [key, value] of Object.entries(q.answers)) {
+                quizHTML += `
+                    <label>
+                        <input type="radio" name="q${index}" value="${key}">
+                        ${key}. ${value.text}
+                    </label>`;
+            }
+            
+            quizHTML += `</div></div>`;
+            
+            // Update progress bar
+            const progress = ((index + 1) / questions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        });
+        document.getElementById('quiz').innerHTML = quizHTML;
+
+        function calculateResult() {
+            const scores = {};
+            
+            // Initialize all archetype scores
+            Object.keys(archetypeInfo).forEach(arch => scores[arch] = 0);
+
+            // Calculate scores
+            let answeredCount = 0;
+            questions.forEach((q, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                if (selected) {
+                    answeredCount++;
+                    const selectedArchetypes = q.answers[selected.value].archetypes;
+                    selectedArchetypes.forEach(arch => scores[arch]++);
+                }
+            });
+
+            if (answeredCount < 10) {
+                alert("Please answer at least 10 questions for accurate results");
+                return;
+            }
+
+            // Get top 3 archetypes
+            const sortedArchetypes = Object.entries(scores)
+                .sort((a, b) => b[1] - a[1])
+                .filter(([arch, score]) => score > 0);
+            
+            const topArchetypes = sortedArchetypes.slice(0, 3);
+            const maxScore = topArchetypes[0][1];
+
+            // Display results
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<h2>Target Analysis Results:</h2>`;
+            
+            if (topArchetypes.length === 0) {
+                resultDiv.innerHTML += `<p>No clear archetype pattern detected. Your target may have balanced personality traits.</p>`;
+            } else {
+                topArchetypes.forEach(([arch, score]) => {
+                    const percentage = Math.round((score / maxScore) * 100);
+                    resultDiv.innerHTML += `
+                        <div class="archetype-detail">
+                            <h3>The ${arch} <span class="match-percentage">(${percentage}% match)</span></h3>
+                            <p><strong>Description:</strong> ${archetypeInfo[arch].desc}</p>
+                            <p><strong>Psychological Weakness:</strong> ${archetypeInfo[arch].weakness}</p>
+                            <p><strong>Recommended Approach:</strong> ${archetypeInfo[arch].approach}</p>
+                        </div>`;
+                });
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
